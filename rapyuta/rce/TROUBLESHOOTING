@@ -1,0 +1,15 @@
+TROUBLESHOOTING file of the RoboEarth Cloud Engine
+--------------------------------------
+
+TS1.	Where do I find the logs ?
+	The framework logs can be found:
+		Currently flushed to the sys.stdout and you can pipe it to a file if needed or
+		modify rce-core/rce/master.py, rce-core/rce/robot.py, or rce-core/rce/container.py to
+		change output permanently to a file.
+		
+	Container level logs can be found inside:
+		/opt/rce/container/data/<container-name>/rce/env.log        # Environment process
+
+TS2.	How do find more information on running containers ?
+	The command [lxc-ls] lists all the running containers.
+	 

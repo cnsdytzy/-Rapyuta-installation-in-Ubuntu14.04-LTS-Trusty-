@@ -1,0 +1,121 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+#     rce-core/rce-maintain
+#
+#     This file is part of the RoboEarth Cloud Engine framework.
+#
+#     This file was originally created for RoboEearth
+#     http://www.roboearth.org/
+#
+#     The research leading to these results has received funding from
+#     the European Union Seventh Framework Programme FP7/2007-2013 under
+#     grant agreement no248942 RoboEarth.
+#
+#     Copyright 2013 RoboEarth
+#
+#     Licensed under the Apache License, Version 2.0 (the "License");
+#     you may not use this file except in compliance with the License.
+#     You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+#     Unless required by applicable law or agreed to in writing, software
+#     distributed under the License is distributed on an "AS IS" BASIS,
+#     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#     See the License for the specific language governing permissions and
+#     limitations under the License.
+#
+#     \author/s: Dhananjay Sathe
+#
+#
+
+#  Python specific imports
+from subprocess import check_call
+import re
+
+
+def fixcreds():
+    from rce.util.settings import getSettings, NoValidSettings
+    from rce.util.cred import _MODE_LENGTH, _RE
+
+    # NOTE: getSettings() terminates execution immediately,
+    #       if the settings file is not valid
+    old_file = getSettings().pw_file
+    new_file = '.'.join((old_file, 'recovered'))
+    regex = re.compile(_RE)
+
+    print('Attempting to recover data to: {0}'.format(new_file))
+
+    try:
+        with open(old_file, 'r') as old, open(new_file, 'w') as new:
+            print('You will be informed of any users that have corrupted '
+                  'data fields. You should consider recreating the '
+                  'corrupted users.')
+
+            for line in old:
+                match = regex.match(line)
+
+                if match and len(match.groups()) == 4:
+                    new.write(line + '\n')
+                else:
+                    print("Data for user '{0}' is corrupted and will be "
+                          'dropped!'.format(line.split()[0]))
+    except IOError:
+        print('Could not read/write the credentials file and/or backup file.')
+
+
+def _get_argparse():
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(prog='rce-maintain',
+                            description='Maintenance utility for the '
+                                        'RoboEarth Cloud Engine.')
+
+    parser.add_argument('mode', choices=['all', 'rce', 'rootfs', 'packages',
+                                         'fixcreds'])
+
+    return parser
+
+
+_INSTALL = 'sudo apt-get update && sudo apt-get -y upgrade'
+_UPDATE_PYPI_PACKAGES = 'sudo easy_install --upgrade autobahn_rce'
+_GIT_UPDATE = ('mkdir -p /tmp/rapyuta && cd /tmp/rapyuta && sudo rm -rf rce && '
+               'git clone https://github.com/IDSCETHZurich/rce.git && '
+               'cd rce && sudo sh install.sh')
+
+
+if __name__ == '__main__':
+    args = _get_argparse().parse_args()
+
+    msg = []
+    cmd = []
+
+    if args.mode == 'all':
+        print('Updating packages on the host system')
+        check_call(_INSTALL, shell=True)
+        check_call(_UPDATE_PYPI_PACKAGES, shell=True)
+
+    if args.mode in ('all', 'rootfs'):
+        msg.append('packages')
+        cmd.append(_INSTALL)
+        cmd.append(_UPDATE_PYPI_PACKAGES)
+
+    if args.mode in ('all', 'rce'):
+        print('Updating the RoboEarth Cloud Engine on the host system')
+        check_call(_GIT_UPDATE, shell=True)
+
+    if args.mode in ('all', 'rootfs', 'rce'):
+        msg.append('the RoboEarth Cloud Engine')
+        cmd.append(_GIT_UPDATE)
+        print('Updating {0} on the container system'.format(' and '.join(msg)))
+        check_call('echo "{0}" | sudo rce-make'.format(';'.join(cmd)),
+                   shell=True)
+
+    if args.mode == 'fixcreds':
+        fixcreds()
+
+    if args.mode == 'packages':
+        # TODO: This is where hooks for using the packages delivery
+        #       mechanism from the machine would fall into place
+        pass

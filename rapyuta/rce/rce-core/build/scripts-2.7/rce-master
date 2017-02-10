@@ -1,0 +1,52 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+#     rce-core/rce-master
+#
+#     This file is part of the RoboEarth Cloud Engine framework.
+#
+#     This file was originally created for RoboEearth
+#     http://www.roboearth.org/
+#
+#     The research leading to these results has received funding from
+#     the European Union Seventh Framework Programme FP7/2007-2013 under
+#     grant agreement no248942 RoboEarth.
+#
+#     Copyright 2013 RoboEarth
+#
+#     Licensed under the Apache License, Version 2.0 (the "License");
+#     you may not use this file except in compliance with the License.
+#     You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+#     Unless required by applicable law or agreed to in writing, software
+#     distributed under the License is distributed on an "AS IS" BASIS,
+#     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#     See the License for the specific language governing permissions and
+#     limitations under the License.
+#
+#     \author/s: Dominique Hunziker
+#
+#
+
+# twisted specific imports
+from twisted.internet import reactor
+
+# rce specific imports
+from rce.master import main
+from rce.util.cred import RCECredChecker, RCEInternalChecker
+from rce.util.settings import getSettings
+settings = getSettings()
+
+if __name__ == '__main__':
+    print("\nConnection Details:\n")
+    print("Internal IP Address: {0}".format(settings.internal_IP))
+    print("Global IP Address:   {0}\n".format(settings.external_IP))
+
+    # Credentials checkers used in the cloud engine
+    extCred = RCECredChecker(settings.pw_file)
+    intCred = RCEInternalChecker(extCred)
+
+    main(reactor, intCred, extCred, settings.internal_port, settings.http_port,
+         settings.comm_port, settings.external_port)

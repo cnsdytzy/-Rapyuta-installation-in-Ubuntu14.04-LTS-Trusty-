@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: rce-console
+Version: 0.3
+Summary: Console package of RoboEarth Cloud Engine.
+Home-page: http:github.com/IDSCETHZurich/rce.git
+Author: Dominique Hunziker
+Author-email: dominique.hunziker@gmail.com
+License: Apache 2.0
+Description:  TODO 
+Platform: 

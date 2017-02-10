@@ -1,0 +1,11 @@
+setup.py
+rce/__init__.py
+rce/console/__init__.py
+rce/console/console.py
+rce_console.egg-info/PKG-INFO
+rce_console.egg-info/SOURCES.txt
+rce_console.egg-info/dependency_links.txt
+rce_console.egg-info/namespace_packages.txt
+rce_console.egg-info/requires.txt
+rce_console.egg-info/top_level.txt
+scripts/rce-console

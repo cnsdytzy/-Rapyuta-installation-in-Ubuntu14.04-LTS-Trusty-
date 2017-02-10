@@ -1,0 +1,202 @@
+diff -crN rce/rce-core/rce/util/container.py ../rce/rce-core/rce/util/container.py
+*** rce/rce-core/rce/util/container.py	2016-11-02 01:26:16.538160186 -0700
+--- ../rce/rce-core/rce/util/container.py	2016-11-02 04:56:50.188995122 -0700
+***************
+*** 43,64 ****
+  
+  
+  _CONFIG_CGROUP = """
+  lxc.cgroup.devices.deny = a
+! # /dev/null and zero
+  lxc.cgroup.devices.allow = c 1:3 rwm
+  lxc.cgroup.devices.allow = c 1:5 rwm
+! # consoles
+! lxc.cgroup.devices.allow = c 5:1 rwm
+  lxc.cgroup.devices.allow = c 5:0 rwm
+! lxc.cgroup.devices.allow = c 4:0 rwm
+! lxc.cgroup.devices.allow = c 4:1 rwm
+! # /dev/{,u}random
+! lxc.cgroup.devices.allow = c 1:9 rwm
+  lxc.cgroup.devices.allow = c 1:8 rwm
+! lxc.cgroup.devices.allow = c 136:* rwm
+  lxc.cgroup.devices.allow = c 5:2 rwm
+! # rtc
+! lxc.cgroup.devices.allow = c 254:0 rwm
+  """
+  
+  _CONFIG_CAP = """
+--- 43,77 ----
+  
+  
+  _CONFIG_CGROUP = """
++ # Default cgroup limits
+  lxc.cgroup.devices.deny = a
+! ## Allow any mknod (but not using the node)
+! lxc.cgroup.devices.allow = c *:* m
+! lxc.cgroup.devices.allow = b *:* m
+! ## /dev/null and zero
+  lxc.cgroup.devices.allow = c 1:3 rwm
+  lxc.cgroup.devices.allow = c 1:5 rwm
+! ## consoles
+  lxc.cgroup.devices.allow = c 5:0 rwm
+! lxc.cgroup.devices.allow = c 5:1 rwm
+! ## /dev/{,u}random
+  lxc.cgroup.devices.allow = c 1:8 rwm
+! lxc.cgroup.devices.allow = c 1:9 rwm
+! ## /dev/pts/*
+  lxc.cgroup.devices.allow = c 5:2 rwm
+! lxc.cgroup.devices.allow = c 136:* rwm
+! ## rtc
+! lxc.cgroup.devices.allow = c 254:0 rm
+! ## fuse
+! lxc.cgroup.devices.allow = c 10:229 rwm
+! ## tun
+! lxc.cgroup.devices.allow = c 10:200 rwm
+! ## full
+! lxc.cgroup.devices.allow = c 1:7 rwm
+! ## hpet
+! lxc.cgroup.devices.allow = c 10:228 rwm
+! ## kvm
+! lxc.cgroup.devices.allow = c 10:232 rwm
+  """
+  
+  _CONFIG_CAP = """
+***************
+*** 83,88 ****
+--- 96,105 ----
+  proc    {proc}    proc    nodev,noexec,nosuid    0 0
+  devpts    {devpts}    devpts    defaults    0 0
+  sysfs    {sysfs}    sysfs    defaults    0 0
++ /sys/fs/fuse/connections sys/fs/fuse/connections none bind,optional 0 0
++ /sys/kernel/debug sys/kernel/debug none bind,optional 0 0
++ /sys/kernel/security sys/kernel/security none bind,optional 0 0
++ /sys/fs/pstore sys/fs/pstore none bind,optional 0 0`
+  """
+  
+  _FSTAB_BIND = """
+diff -crN rce/setup/provision ../rce/setup/provision
+*** rce/setup/provision	2016-11-02 01:26:16.542160186 -0700
+--- ../rce/setup/provision	2016-11-02 04:36:35.325812060 -0700
+***************
+*** 56,63 ****
+  _ROS_SRC = ("""sudo sh -c """
+               """'echo "deb http://packages.ros.org/ros/ubuntu {base} main" """
+               """> /etc/apt/sources.list.d/ros-latest.list'""")
+! _ROS_KEY = 'curl http://packages.ros.org/ros.key | sudo apt-key add -'
+! _INSTALL = 'sudo apt-get update && sudo apt-get -y install {0}'
+  _CONTAINER = ('sudo bash container.bash --baserel={base} --path={path} '
+                '--rosrel={ros}')
+  _CONTAINER_CLEAN = 'sudo bash container.bash --baserel={base} --clean'
+--- 56,63 ----
+  _ROS_SRC = ("""sudo sh -c """
+               """'echo "deb http://packages.ros.org/ros/ubuntu {base} main" """
+               """> /etc/apt/sources.list.d/ros-latest.list'""")
+! _ROS_KEY = 'sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net --recv-key 0xB01FA116'
+! _INSTALL = 'sudo apt-get update && sudo apt-get -f -y install {0}'
+  _CONTAINER = ('sudo bash container.bash --baserel={base} --path={path} '
+                '--rosrel={ros}')
+  _CONTAINER_CLEAN = 'sudo bash container.bash --baserel={base} --clean'
+***************
+*** 68,89 ****
+  ###   Configuration   ###
+  #########################
+  # Packages necessary to run the provision script
+! _BASE_PREP = 'curl python-setuptools python-dev'
+  
+  # Packages which are installed in the host filesystem
+  # TODO: package 'linux-headers-virtual' is transitional
+  _HOST_PKGS = ('lxc debootstrap python-openssl python-imaging '
+!               'ros-{ros}-ros-comm ros-{ros}-common-msgs linux-headers-virtual '
+                'openvswitch-datapath-source openvswitch-datapath-dkms '
+!               'openvswitch-common openvswitch-switch openvswitch-brcompat')
+  
+  # Packages which are installed in the container filesystem
+! _CONTAINER_PKGS = 'git-core ros-{ros}-ros-comm ros-{ros}-common-msgs'
+  
+  # Mapping of supported ROS releases and supported Ubuntu releases
+  _SUPPORT_VERSIONS = {'precise' : ['fuerte', 'groovy', 'hydro'],
+                       'quantal' : ['groovy', 'hydro'],
+!                      'raring' : ['hydro']}
+  
+  # Default location of container installation
+  _CONTAINER_DEFAULT = '/opt/rce/container'
+--- 68,91 ----
+  ###   Configuration   ###
+  #########################
+  # Packages necessary to run the provision script
+! _BASE_PREP = 'build-essential git curl python-setuptools python-dev'
+  
+  # Packages which are installed in the host filesystem
+  # TODO: package 'linux-headers-virtual' is transitional
+  _HOST_PKGS = ('lxc debootstrap python-openssl python-imaging '
+!               'ros-{ros}-ros-base ros-{ros}-ros-comm ros-{ros}-common-msgs linux-headers-virtual '
+                'openvswitch-datapath-source openvswitch-datapath-dkms '
+!               'openvswitch-common openvswitch-switch')
+  
+  # Packages which are installed in the container filesystem
+! _CONTAINER_PKGS = 'build-essential libpython2.7-minimal python2.7-minimal libpython2.7-stdlib mime-support python2.7 python-minimal libpython-stdlib python libcurl3-gnutls libexpat1 liberror-perl git-man git git-core'
+! _CONTAINER_ROS = 'ros-{ros}-ros-base'
+  
+  # Mapping of supported ROS releases and supported Ubuntu releases
+  _SUPPORT_VERSIONS = {'precise' : ['fuerte', 'groovy', 'hydro'],
+                       'quantal' : ['groovy', 'hydro'],
+!                      'raring' : ['hydro'],
+!                      'trusty'  : ['indigo']}
+  
+  # Default location of container installation
+  _CONTAINER_DEFAULT = '/opt/rce/container'
+***************
+*** 141,147 ****
+      """ Ask for ROS release to deploy in the container.
+      """
+      opt = _select_option('Enter the ROS release to deploy in the container.',
+!                          ('fuerte', 'groovy', 'hydro (experimental)'), 0)
+      return opt.split()[0]
+  
+  
+--- 143,149 ----
+      """ Ask for ROS release to deploy in the container.
+      """
+      opt = _select_option('Enter the ROS release to deploy in the container.',
+!                          ('fuerte', 'groovy', 'hydro (experimental)', 'indigo (new)'), 3)
+      return opt.split()[0]
+  
+  
+***************
+*** 150,156 ****
+      """
+      opt = _select_option('Enter the Ubuntu release to deploy in the container.',
+                           ('precise (12.04 LTS)', 'quantal (12.10)',
+!                           'raring (13.04)'), 0)
+      return opt.split()[0]
+  
+  
+--- 152,158 ----
+      """
+      opt = _select_option('Enter the Ubuntu release to deploy in the container.',
+                           ('precise (12.04 LTS)', 'quantal (12.10)',
+!                           'raring (13.04)', 'trusty (14.04)'), 3)
+      return opt.split()[0]
+  
+  
+***************
+*** 309,314 ****
+--- 311,317 ----
+      """
+      host_pkgs = _HOST_PKGS.format(ros=config.host_ros_release)
+      container_pkgs = _CONTAINER_PKGS.format(ros=config.container_ros_release)
++     container_ros = _CONTAINER_ROS.format(ros=config.container_ros_release)
+  
+      # Install the packages in the host filesystem
+      cmds = (_INSTALL.format(_BASE_PREP),
+***************
+*** 335,340 ****
+--- 338,345 ----
+          _ROS_SRC.format(base=config.container_ubuntu_release),
+          _ROS_KEY,
+          _INSTALL.format(container_pkgs),
++         'sudo apt-get -f install aptitude-common libboost-iostreams1.54.0 libcwidget3 libept1.4.12 libsigc++-2.0-0c2a libxapian22 build-essential aptitude',
++         _INSTALL.format(container_ros),
+          'mkdir -p /tmp/rapyuta && cd /tmp/rapyuta && sudo rm -rf rce && '
+          'git clone -b master https://github.com/IDSCETHZurich/rce.git && '
+          'cd rce && sudo sh install.sh',

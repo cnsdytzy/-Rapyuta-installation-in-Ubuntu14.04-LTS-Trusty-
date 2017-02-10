@@ -1,0 +1,14 @@
+README
+setup.py
+rce/__init__.py
+rce/client/__init__.py
+rce/client/connection.py
+rce/client/interface.py
+rce/client/ros.py
+rce_client.egg-info/PKG-INFO
+rce_client.egg-info/SOURCES.txt
+rce_client.egg-info/dependency_links.txt
+rce_client.egg-info/namespace_packages.txt
+rce_client.egg-info/requires.txt
+rce_client.egg-info/top_level.txt
+scripts/rce-ros
