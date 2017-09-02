@@ -482,7 +482,7 @@ if HAS_ROS:
 
         def _start(self):
             self._pub = rospy.Publisher(self._addr,
-                                        self._conn.loader.loadMsg(*self._args))
+                                        self._conn.loader.loadMsg(*self._args), queue_size=10)
             print("Local ROS Publisher on topic '{0}' is "
                   'up.'.format(self._addr))
 
